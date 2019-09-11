@@ -1,0 +1,31 @@
+{% load i18n staticfiles %}
+
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.48.4/lib/codemirror.css">
+</head>
+<body>
+
+<form method="post" action="">
+    <textarea name='content' id="content">{{ file_data }}</textarea>
+    {% csrf_token %}
+    <button type="submit" id="saveButton">{% trans "Save" %}</button>
+</form>
+
+
+<p id="notify"></p>
+
+<script src="{% static 'filer/codemirror/lib/codemirror.min.js' %}"></script>
+<script src="{% static 'filer/codemirror/mode/xml/xml.js' %}"></script>
+{% if error_messsage %}
+<p>{{error_messsage}}</p>
+{% endif %}
+
+<script>
+    var textArea = document.getElementById("content");
+    var editor = CodeMirror.fromTextArea(textArea, {
+        lineNumbers: true,
+        //mode: 'xml',
+    });
+</script>
+
+</body>

@@ -1,0 +1,63 @@
+language: python
+
+sudo: false
+
+matrix:
+  include:
+    - python: 3.5
+      env: TOX_ENV='flake8'
+    - python: 3.5
+      env: TOX_ENV='isort'
+    - python: 3.5
+      env: TOX_ENV='docs'
+    - python: 3.5
+      env: TOX_ENV='frontend'
+    # Django 1.11
+    - python: 2.7
+      env: DJANGO='dj111' SWAP='noswap'
+    - python: 3.4
+      env: DJANGO='dj111' SWAP='noswap'
+    - python: 3.5
+      env: DJANGO='dj111' SWAP='noswap'
+    - python: 3.6
+      env: DJANGO='dj111' SWAP='noswap'
+    - python: 3.6
+      env: DJANGO='dj111' SWAP='swap'
+    # Django 2.1
+    - python: 3.5
+      env: DJANGO='dj21' SWAP='noswap'
+      dist: xenial
+    - python: 3.6
+      env: DJANGO='dj21' SWAP='swap'
+      dist: xenial
+    # Django 2.2
+    - python: 3.7
+      env: DJANGO='dj22' SWAP='noswap'
+      dist: xenial
+    - python: 3.7
+      env: DJANGO='dj22' SWAP='swap'
+      dist: xenial
+
+install:
+  - pip install coverage isort tox
+  - "if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then export PY_VER=py27; fi"
+  - "if [[ $TRAVIS_PYTHON_VERSION == '3.4' ]]; then export PY_VER=py34; fi"
+  - "if [[ $TRAVIS_PYTHON_VERSION == '3.5' ]]; then export PY_VER=py35; fi"
+  - "if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then export PY_VER=py36; fi"
+  - "if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then export PY_VER=py37; fi"
+  - "if [[ ${DJANGO}z != 'z' ]]; then export TOX_ENV=$PY_VER-$DJANGO-$SWAP; fi"
+
+before_script:
+  - if [ $TOX_ENV == 'frontend' ]; then
+    nvm install 0.12.7 && nvm use 0.12.7;
+    npm config set spin false;
+    npm install -g npm@2;
+    npm install -g gulp@3.9.0;
+    npm install;
+    fi
+
+script:
+  - tox -e $TOX_ENV
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

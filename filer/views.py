@@ -44,22 +44,31 @@ class FileEditView(View):
 
     def get(self, request, uploaded_at, file_id):
         filer_file = self.get_file(request, uploaded_at, file_id)
+        editor_cls = self.get_editor_class(filer_file)
+        data = editor_cls().get_context_data()
         with open(filer_file.path, 'r') as f:
             file_data = f.read()
-            return render(self.request, self.get_template(filer_file),
-                          {'file_data': file_data})
+            data['file_data'] = file_data
+            return render(self.request,
+                          editor_cls.template_name,
+                          data)
 
     def post(self, request, uploaded_at, file_id):
         filer_file = self.get_file(request, uploaded_at, file_id)
         content = self.request.POST['content']
         editor_cls = self.get_editor_class(filer_file)
+        data = editor_cls().get_context_data()
         valid, err_mes = editor_cls._validate(content)
         if valid:
             with open(filer_file.path, 'w') as f:
                 f.write(content)
-                return render(self.request, self.get_template(filer_file),
-                              {'file_data': content})
+                data['file_data'] = content
+                return render(self.request,
+                              editor_cls.template_name,
+                              data)
         else:
-            return render(self.request, self.get_template(filer_file),
-                          {'file_data': content,
-                           'error_messsage': err_mes})
+            data['file_data'] = content
+            data['error_messsage'] = err_mes
+            return render(self.request,
+                          self.get_template(filer_file),
+                          data)

@@ -7,8 +7,13 @@ from filer.file_edit.base import BaseFileEditor
 
 class CodeMirrorBaseEditor(BaseFileEditor):
     template_name = 'admin/filer/file_edit.html'
-    codemirror_extension = ''
-    extension = 'txt'
+    codemirror_extension = 'txt'
+    extension = ['txt', 'config', 'conf']
+
+    def get_context_data(self, **kwargs):
+        data = super(BaseFileEditor, self).get_context_data(**kwargs)
+        data['mode'] = self.codemirror_extension
+        return data
 
 
 class XMLEditor(CodeMirrorBaseEditor):

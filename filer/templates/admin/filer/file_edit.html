@@ -1,7 +1,7 @@
 {% load i18n staticfiles %}
 
 <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.48.4/lib/codemirror.css">
+    <link rel="stylesheet" href="{% static 'filer/codemirror/lib/codemirror.min.css' %}">
 </head>
 <body>
 
@@ -24,7 +24,7 @@
     var textArea = document.getElementById("content");
     var editor = CodeMirror.fromTextArea(textArea, {
         lineNumbers: true,
-        //mode: 'xml',
+        mode: '{{mode}}',
     });
 </script>
 

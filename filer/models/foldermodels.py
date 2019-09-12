@@ -8,7 +8,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils.http import urlquote
 from django.utils.translation import ugettext_lazy as _
-
+from django.db import transaction
 import mptt
 import os
 import shutil
@@ -156,6 +156,14 @@ class Folder(models.Model, mixins.IconsMixin):
         return self.all_files.all()
 
     @property
+    def all_child_files(self):
+        files = list(self.files)
+        childen = self.children.all()
+        for child in childen:
+            files += child.all_child_files
+        return files
+
+    @property
     def logical_path(self):
         """
         Gets logical path of the folder in the tree structure.
@@ -245,20 +253,81 @@ class Folder(models.Model, mixins.IconsMixin):
         except Folder.DoesNotExist:
             return False
 
+    @property
+    def filesystem_path(self):
+        return os.path.join(
+            settings.MEDIA_ROOT,
+            self.relative_path,
+        )
+
+    @property
+    def relative_path(self):
+        return os.path.join(
+            filer_settings.FILER_STORAGES['public']['main'][
+                'UPLOAD_TO_PREFIX'],
+            self.pretty_logical_path[1:].replace('/', os.sep)
+        )
+
     def delete(self, *args, **kwargs):
         # Если активировано зеркалирование папок в файловую систему
         # В случае удаления папки удаляем и папку на диске
-        if filer_settings.FILE_FILESYSTEM_MIRRORING:
-            folder_path = os.path.join(
-                settings.MEDIA_ROOT,
-                filer_settings.FILER_STORAGES['public']['main']['UPLOAD_TO_PREFIX'],
-                self.pretty_logical_path[1:].replace('/', os.sep)
-            )
+        if filer_settings.FILER_FILESYSTEM_MIRRORING:
+            folder_path = self.filesystem_path
             try:
                 shutil.rmtree(folder_path)
             except Exception as e:
                 pass
         super(Folder, self).delete(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        if filer_settings.FILER_FILESYSTEM_MIRRORING:
+
+            with transaction.atomic():
+                folder_path = self.filesystem_path
+                if not self.pk:
+                    super(Folder, self).save(*args, **kwargs)
+                    if not os.path.isdir(folder_path):
+                        os.mkdir(folder_path)
+                else:
+                    old_instance = Folder.objects.get(pk=self.pk)
+                    super(Folder, self).save(*args, **kwargs)
+                    os.rename(old_instance.filesystem_path, self.filesystem_path)
+                    if not old_instance.name == self.name:
+                        self._attach_children_to_new_path()
+        else:
+            super(Folder, self).save(*args, **kwargs)
+
+    def _move_folders(self, destination):
+        if filer_settings.FILER_FILESYSTEM_MIRRORING:
+
+            folder_path = self.filesystem_path
+            if not self.parent_id == destination.id:
+                new_path = os.path.join(destination.filesystem_path, self.name)
+                self.save()
+                os.rename(folder_path, new_path)
+
+
+    def _attach_children_to_new_path(self):
+        # Все файлы которые были в этой папке все ещё ссылаются на файл по
+        # старому пути через старое имя. Необходимо всем им обновить пути
+        if filer_settings.FILER_FILESYSTEM_MIRRORING:
+            from .filemodels import File
+
+            files = self.all_child_files
+            folders = self.children.all()
+            for child in folders:
+                files += child.files
+
+            for file in files:
+                # Находим файл по новому пути
+                # и записываем его
+                base_filename = file.file.name.split('/')[-1]
+                new_filename = os.path.join(
+                    file.folder.relative_path,
+                    base_filename
+                )
+                File.objects.filter(pk=file.pk).update(
+                    file=new_filename.replace(os.sep, '/'))
 
 
     class Meta(object):

@@ -2,11 +2,16 @@
 
 <head>
     <link rel="stylesheet" href="{% static 'filer/codemirror/lib/codemirror.min.css' %}">
+    <style>
+        .CodeMirror {
+            height: 90%;
+        }
+    </style>
 </head>
 <body>
 
 <form method="post" action="">
-    <textarea name='content' id="content">{{ file_data }}</textarea>
+    <textarea style="height:90%" name='content' id="content">{{ file_data }}</textarea>
     {% csrf_token %}
     <button type="submit" id="saveButton">{% trans "Save" %}</button>
 </form>

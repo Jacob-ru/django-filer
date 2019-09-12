@@ -881,7 +881,9 @@ class FolderAdmin(PrimitivePermissionAwareModelAdmin):
             f.folder = destination
             f.save()
         for f in folders_queryset:
+            f._move_folders(destination)
             f.move_to(destination, 'last-child')
+            f._attach_children_to_new_path()
             f.save()
 
     def move_files_and_folders(self, request, files_queryset, folders_queryset):

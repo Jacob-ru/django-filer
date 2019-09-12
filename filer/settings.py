@@ -60,7 +60,7 @@ FILER_ALLOWED_FOR_EDIT_EXTENSIONS = getattr(settings, "FILER_ALLOWED_FOR_EDIT_EX
 FILER_EDIT_URL = getattr(settings, 'FILER_EDIT_URL', 'filer_edit/')
 
 # Enabling FileSystem dirs mirroring
-FILE_FILESYSTEM_MIRRORING = getattr(settings, "FILE_FILESYSTEM_MIRRORING", True)
+FILER_FILESYSTEM_MIRRORING = getattr(settings, "FILER_FILESYSTEM_MIRRORING", True)
 
 # This is an ordered iterable that describes a list of
 # classes that I should check for when adding files

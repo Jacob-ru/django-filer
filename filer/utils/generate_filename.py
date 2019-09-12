@@ -5,8 +5,7 @@ import os
 
 from django.utils.timezone import now
 from django.conf import settings
-
-
+from django.utils.text import get_valid_filename as django_get_valid_filename
 from .files import get_valid_filename
 
 
@@ -29,7 +28,7 @@ def randomized(instance, filename):
             get_valid_filename(filename))
 
 def by_folder(instance, filename):
-    valid_name = get_valid_filename(filename)
+    valid_name = django_get_valid_filename(filename)
     if instance.folder_id:
         in_media_path = os.path.join(
             instance.folder.pretty_logical_path[1:].replace('/', os.sep),

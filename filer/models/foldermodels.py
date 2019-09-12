@@ -10,6 +10,8 @@ from django.utils.http import urlquote
 from django.utils.translation import ugettext_lazy as _
 
 import mptt
+import os
+import shutil
 
 from .. import settings as filer_settings
 from ..utils.compatibility import (
@@ -242,6 +244,22 @@ class Folder(models.Model, mixins.IconsMixin):
             return True
         except Folder.DoesNotExist:
             return False
+
+    def delete(self, *args, **kwargs):
+        # Если активировано зеркалирование папок в файловую систему
+        # В случае удаления папки удаляем и папку на диске
+        if filer_settings.FILE_FILESYSTEM_MIRRORING:
+            folder_path = os.path.join(
+                settings.MEDIA_ROOT,
+                filer_settings.FILER_STORAGES['public']['main']['UPLOAD_TO_PREFIX'],
+                self.pretty_logical_path[1:].replace('/', os.sep)
+            )
+            try:
+                shutil.rmtree(folder_path)
+            except Exception as e:
+                pass
+        super(Folder, self).delete(*args, **kwargs)
+
 
     class Meta(object):
         # see: https://github.com/django-mptt/django-mptt/pull/577

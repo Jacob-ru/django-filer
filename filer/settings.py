@@ -59,6 +59,9 @@ if not all(x in FILER_ADMIN_ICON_SIZES for x in _ESSENTIAL_ICON_SIZES):
 FILER_ALLOWED_FOR_EDIT_EXTENSIONS = getattr(settings, "FILER_ALLOWED_FOR_EDIT_EXTENSIONS", [])
 FILER_EDIT_URL = getattr(settings, 'FILER_EDIT_URL', 'filer_edit/')
 
+# Enabling FileSystem dirs mirroring
+FILE_FILESYSTEM_MIRRORING = getattr(settings, "FILE_FILESYSTEM_MIRRORING", True)
+
 # This is an ordered iterable that describes a list of
 # classes that I should check for when adding files
 FILER_FILE_MODELS = getattr(

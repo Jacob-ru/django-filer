@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
+from django.core.files.base import File as DjangoFile
 from django.utils.translation import ugettext_lazy as _
 
 from .. import settings as filer_settings
@@ -208,6 +209,23 @@ class File(PolymorphicModel, mixins.IconsMixin):
         if self._old_is_public != self.is_public and self.pk:
             self._move_file()
             self._old_is_public = self.is_public
+        if self.id and filer_settings.FILER_FILESYSTEM_MIRRORING:
+            old_instance = File.objects.get(pk=self.pk)
+            if not old_instance.folder_id == self.folder_id:
+                base_filename = self.file.name.split('/')[-1]
+                new_filename = os.path.join(
+                    self.folder.relative_path,
+                    base_filename
+                )
+
+                old_path = os.path.join(settings.MEDIA_ROOT,
+                                        *old_instance.file.name.split('/'))
+                new_path = os.path.join(settings.MEDIA_ROOT,
+                                        new_filename)
+                os.rename(old_path, new_path)
+                #self.file.file = DjangoFile(open(new_path, 'r'))
+                self.file.name = new_filename.replace(os.sep, '/')
+
         super(File, self).save(*args, **kwargs)
     save.alters_data = True
 

@@ -260,11 +260,14 @@ class Folder(models.Model, mixins.IconsMixin):
             self.relative_path,
         )
 
+    @staticmethod
+    def base_path():
+        return filer_settings.FILER_STORAGES['public']['main']['UPLOAD_TO_PREFIX']
+
     @property
     def relative_path(self):
         return os.path.join(
-            filer_settings.FILER_STORAGES['public']['main'][
-                'UPLOAD_TO_PREFIX'],
+            self.base_path(),
             self.pretty_logical_path[1:].replace('/', os.sep)
         )
 
